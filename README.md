@@ -1,4 +1,4 @@
-# KaaS Askarl v1.0.2
+# KaaS Askarl v1.0.3
 Askarl, a simple RESTful interface to a KaaS (Karlettin as a Service) implementation.
 
 ## Usage
@@ -9,12 +9,12 @@ Finally you can ask Karl (don't forget the offer!):
 http://ask.dataninja.it/to/karl?token=your-token&budget=5&question=Dove+trovo+i+dati+sulle+frodi+informatiche.
 
 Be careful, every answered question decreases your budget of your offer. When all your money has gone, you can refill the budget
-(http://ask.dataninja.it/for/token?token=your-token&budget=100) and keep asking to karl.
+(http://ask.dataninja.it/for/user?token=your-token&budget=100) and keep asking karl.
 
 If something goes wrong, please read the error description carefully. And if you think there is a bug,
 please [open a new issue](https://github.com/Dataninja/kaas-askarl/issues/new).
 
-And remember: don't ask to ask karl, just ask!
+And remember: don't ask to ask karl, just ask karl!
 
 ### /for
 Prefix to manage your personal account.
@@ -50,7 +50,7 @@ Managed parameters are listed if no one is provided.
 Examples:
 
 * http://ask.dataninja.it/for/user?token=your-token (show info)
-* http://ask.dataninja.it/for/token?token=your-token&budget=100 (add 100 € to your budget)
+* http://ask.dataninja.it/for/user?token=your-token&budget=100 (add 100 € to your budget)
 
 #### /for/remove
 Remove a registered user.
