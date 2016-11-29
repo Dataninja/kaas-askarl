@@ -5,7 +5,7 @@ import json, time, uuid, random, pickle
 from flask import Flask, Response, request, redirect
 
 base_url = "http://ask.dataninja.it"
-repo_url = "https://github.com/Dataninja/ask-to-karl"
+repo_url = "https://github.com/Dataninja/kaas-askarl"
 file_db = "./tokens.db"
 bots = {
     "karl": {
