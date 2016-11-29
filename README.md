@@ -12,20 +12,20 @@ Query to [bot]. Available bots are listed at */to*.
 Managed parameters are listed if no one is provided.
 
 * t or token (required): a valid token of a registered user
-* q or question (required): the question, an URL encoded text (ie. "Dove trovo dati sul tasso di natalità?");
+* q or question (required): the question, an URL encoded text (ie. "Dove trovo dati sul tasso di natalità?")
 * b or budget (required): how much money are you willing to offer (in euros, ie. 5 or 2k)?
 * m or mode: you hurry?
-** fast (default)
-** accurate
-** fa (fast AND accurate)
+ * fast (default)
+ * accurate
+ * fa (fast AND accurate)
 * r or reply-to: how do you want to get the answer?
-** now (wait for the reply, default)
-** a valid email address (not implemented)
-** a valid callback url (webhook, not implemented)
+ * now (wait for the reply, default)
+ * a valid email address (not implemented)
+ * a valid callback url (webhook, not implemented)
 
 Examples:
 
-* http://ask.dataninja.it/to/karl?token=your-token&budget=5&question=Dove+trovo+i+dati+sulle+frodi+informatiche (5 € waiting for a fast response);
+* http://ask.dataninja.it/to/karl?token=your-token&budget=5&question=Dove+trovo+i+dati+sulle+frodi+informatiche (5 € waiting for a fast response)
 * ...
 
 ### /for
@@ -35,20 +35,20 @@ Prefix to manage your personal account.
 Register a new user providing your name.
 Managed parameters are listed if no one is provided.
 
-* n or name (required): user name;
+* n or name (required): user name
 * b or budget (required): money to add to budget (in euros, ie. 5 or 2k)
 * r or reply-to: how do you want to get the answer if not provided when asking?
-** now (wait for the reply, default)
-** a valid email address
-** a valid callback url (webhook)
+ * now (wait for the reply, default)
+ * a valid email address
+ * a valid callback url (webhook)
 
 Success response register the user and return the personal token.
 Annotate it for later queries!
 
 Examples:
 
-* http://ask.dataninja.it/for/token?name=Your+Name (no budget);
-* http://ask.dataninja.it/for/token?name=Your+Name&budget=2k (start with 2,000 €).
+* http://ask.dataninja.it/for/token?name=Your+Name (no budget)
+* http://ask.dataninja.it/for/token?name=Your+Name&budget=2k (start with 2,000 €)
 
 WARNING: data are not crypted, nor safely stored and can be public available, so don't send sensitive data in your name.
 
@@ -61,8 +61,8 @@ Managed parameters are listed if no one is provided.
 
 Examples:
 
-* http://ask.dataninja.it/for/user?token=your-token (show info);
-* http://ask.dataninja.it/for/token?token=your-token&budget=100 (add 100 € to your budget).
+* http://ask.dataninja.it/for/user?token=your-token (show info)
+* http://ask.dataninja.it/for/token?token=your-token&budget=100 (add 100 € to your budget)
 
 #### /for/remove
 Remove a registered user.
