@@ -1,4 +1,4 @@
-# ask-to-karl
+# Ask to Karl v1.0.0
 A simple RESTful interface to a KaaS (Karlettin as a Service) implementation.
 
 ## Usage
