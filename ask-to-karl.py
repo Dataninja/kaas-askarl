@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import json, time, uuid, random, pickle
-from flask import Flask, Response, request
+from flask import Flask, Response, request, redirect
 
 base_url = "http://ask.dataninja.it"
-file_db = "/home/dataninja/domains/ask.dataninja.it/opt/tokens.db"
+repo_url = "https://github.com/Dataninja/ask-to-karl"
+file_db = "./tokens.db"
 bots = {
     "karl": {
         "id": "karl",
@@ -17,7 +18,13 @@ bots = {
 }
 responses = {
     "karl": [
-        ""
+        "E che te lo dico a fare... 'a Banca Mondiale, c'hanno tutto!",
+        "Eurostat... stacce!",
+        "Po esse' che all'Istat ce ricavi quarcosa, se nun te perdi...",
+        "Eh, ma questa è tosta, te devo trova' du' dati appizzati...",
+        "Eh, ieri 'a sapevo...",
+        "No, guarda, io 'sti dati nun li tocco, se li voi prende' da te, ma io nun li vojo manco vede'!",
+        "Mo' chiamo st'amico mio e te li rimedio, tranqui proprio..."
     ]
 }
 parameters = {
@@ -55,13 +62,13 @@ parameters = {
             "name": "reply-to",
             "type": "string",
             "description": "Reply to method: %s" % " | ".join([
-                "sync (wait for response)",
+                "now (wait for response)",
                 "yourmail@yourdomain.com (send to email)",
                 "http://your.domain.com/callback (webhook)"
             ])
         }
     },
-    "for_me": {
+    "for_user": {
         "token": {
             "id": "t",
             "name": "token",
@@ -79,7 +86,7 @@ parameters = {
             "name": "reply-to",
             "type": "string",
             "description": "Reply to method: %s" % " | ".join([
-                "sync (wait for response)",
+                "now (wait for response)",
                 "yourmail@yourdomain.com (send to email)",
                 "http://your.domain.com/callback (webhook)"
             ])
@@ -103,7 +110,7 @@ parameters = {
             "name": "reply-to",
             "type": "string",
             "description": "Reply to method: %s" % " | ".join([
-                "sync (wait for response)",
+                "now (wait for response)",
                 "yourmail@yourdomain.com (send to email)",
                 "http://your.domain.com/callback (webhook)"
             ])
@@ -135,6 +142,10 @@ def to_euro(budget):
         return int(budget)
     except Exception, e:
         return 0
+
+@app.route("/")
+def main():
+    return redirect(repo_url, code=302)
 
 @app.route("/to")
 def rto():
@@ -238,14 +249,14 @@ def to_bot(bot = ""):
 
     reply_to = args.get("r",args.get("reply-to",tokens[token]['reply-to']))
 
-    if reply_to == "sync":
+    if reply_to == "now":
         time.sleep(random.randint(1,min(len(question.split()),10)))
         if budget > 1999:
-            response = "Ao, se c'hai pure da puli' 'a machina chiamame de corsa! %s " % random.choice(responses[bot])
+            response = "Ao, se c'hai pure da puli' 'a machina chiamame de corsa! %s" % random.choice(responses[bot])
         elif budget > 9:
-            response = "Nun so' 2k, ma bono così! %s " % random.choice(responses[bot])
+            response = "Nun so' 2k, ma bono così! %s" % random.choice(responses[bot])
         else:
-            response = "Mortacci che purciaro! %s " % random.choice(responses[bot])
+            response = "Mortacci che purciaro! %s" % random.choice(responses[bot])
     else:
         if mode == "fast":
             response = "E mo quarcosa te trovo, intanto vatte a vede' 'a Banca Mondiale che c'ha tutto..."
@@ -253,6 +264,7 @@ def to_bot(bot = ""):
             response = "Se vabbè, nun t'allarga', quanno c'ho tempo..."
 
     tokens[token]['questions'] += 1
+    tokens[token]['last_action'] = int(time.time())
 
     with open(file_db,"w") as f:
         pickle.dump(tokens,f)
@@ -282,9 +294,9 @@ def rfor():
             "status": "ok",
             "methods": [
                 {
-                    "id": "me",
-                    "handler": "/for/me",
-                    "url": "%s/for/me" % base_url
+                    "id": "user",
+                    "handler": "/for/user",
+                    "url": "%s/for/user" % base_url
                 },
                 {
                     "id": "token",
@@ -302,8 +314,8 @@ def rfor():
         mimetype = "application/json"
     )
 
-@app.route("/for/me")
-def for_me():
+@app.route("/for/user")
+def for_user():
     received = int(time.time())
 
     args = request.args
@@ -319,7 +331,7 @@ def for_me():
                 "emitted": int(time.time()),
                 "status": "forbidden",
                 "response": "Chi sei, che vuoi? Un fiorino!",
-                "parameters": parameters['for_me']
+                "parameters": parameters['for_user']
             }, sort_keys=True, indent=4, separators=(',', ': ')),
             status = 403,
             mimetype = "application/json"
@@ -327,6 +339,8 @@ def for_me():
 
     if budget:
         tokens[token]['budget'] += budget
+        tokens[token]['last_action'] = int(time.time())
+        tokens[token]['last_update'] = int(time.time())
 
     with open(file_db,"w") as f:
         pickle.dump(tokens,f)
@@ -349,7 +363,7 @@ def for_token():
     args = request.args
     name = args.get("n",args.get("name",""))
     budget = to_euro(args.get("b",args.get("budget","0")))
-    reply_to = args.get("r",args.get("reply-to","sync"))
+    reply_to = args.get("r",args.get("reply-to","now"))
 
     if not name:
         return Response(
@@ -367,10 +381,13 @@ def for_token():
     token = str(uuid.uuid4())
     tokens[token] = {
         "id": token,
+        "token": token,
         "name": name,
         "budget": budget,
         "reply-to": reply_to,
         "created_at": int(time.time()),
+        "last_update": int(time.time()),
+        "last_action": int(time.time()),
         "questions": 0
     }
 
@@ -441,6 +458,8 @@ def for_remove():
 
 if __name__ == "__main__":
     print "Up and running!"
+    print "Registered users:"
+    print tokens
     app.run(port = 51345)
     with open(file_db,"w") as f:
         pickle.dump(tokens,f)
