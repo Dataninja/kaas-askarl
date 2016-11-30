@@ -1,15 +1,19 @@
-# KaaS Askarl v1.0.3
+# KaaS Askarl v1.1.0
 Askarl, a simple RESTful interface to a KaaS (Karlettin as a Service) implementation.
 
 ## Usage
 A working version is available at http://ask.dataninja.it/. First you have to register a personal account,
-obtain a token for your later requests and add money to your budget: http://ask.dataninja.it/for/token?name=Your+Name&budget=2k.
+obtain a token for your later requests and add money to your budget: http://ask.dataninja.it/for/token?name=Your+Name&budget=2k
+(change "Your+Name" with your url encoded name).
 
 Finally you can ask Karl (don't forget the offer!):
-http://ask.dataninja.it/to/karl?token=your-token&budget=5&question=Dove+trovo+i+dati+sulle+frodi+informatiche.
+http://ask.dataninja.it/to/karl?token=your-token&budget=5&question=Dove+trovo+i+dati+sulle+frodi+informatiche
+(change "your-token" with your token).
 
 Be careful, every answered question decreases your budget of your offer. When all your money has gone, you can refill the budget
 (http://ask.dataninja.it/for/user?token=your-token&budget=100) and keep asking karl.
+
+If you have bonus, every question decreases bonus and not budget.
 
 If something goes wrong, please read the error description carefully. And if you think there is a bug,
 please [open a new issue](https://github.com/Dataninja/kaas-askarl/issues/new).
@@ -83,10 +87,17 @@ Examples:
 * ...
 
 ## Installation
-Clone the repository, change the service port if needed and run the service: `python askarl.py`.
-Open http://localhost:54234 (or using your customized port) and use the service.
-Registered accounts are stored in a *tokens.db* file in pickle format and listed at */for/tokens*.
+Clone the repository and run the service: `python askarl.py [port]`. Default port is 51345.
+Open http://localhost:51345 (or using your customized port) and use the service.
+
+## Administration
+Registered accounts are stored in a *users.db* file in pickle format and listed at */for/users*.
+Asked questions are listed at */for/questions*.
 
 ## Credits
-Made with love by [Alessio "jenkin" Cimarelli](https://github.com/jenkin) for [Dataninja](https://github.com/Dataninja/) & friends.
+Made with love by [Alessio "jenkin" Cimarelli](https://github.com/jenkin)
+for [Dataninja](https://github.com/Dataninja) & [friends](https://www.facebook.com/groups/dataninja/).
+
+Freely inspired by [dottorblaster/stocazzo](https://github.com/dottorblaster/stocazzo) and
+[thepressmatch.help/generatoreComunicati](http://www.thepressmatch.help/generatoreComunicati/).
 
