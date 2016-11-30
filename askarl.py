@@ -4,7 +4,7 @@
 import json, time, uuid, random, pickle, sys
 from flask import Flask, Response, request, redirect
 
-base_url = "http://ask.dataninja.it"
+version = "1.0.3"
 repo_url = "https://github.com/Dataninja/kaas-askarl"
 file_db = "./tokens.db"
 bots = {
@@ -12,8 +12,7 @@ bots = {
         "id": "karl",
         "name": "Carlo Romagnoli",
         "twitter": "@karlettin",
-        "handler": "/to/karl",
-        "url": "%s/to/karl" % base_url
+        "handler": "/to/karl"
     }
 }
 responses = {
@@ -26,6 +25,16 @@ responses = {
         "No, guarda, io 'sti dati nun li tocco, se li voi prende' da te, ma io nun li vojo manco vede'!",
         "Mo' chiamo st'amico mio e te li rimedio, tranqui proprio..."
     ]
+}
+methods = {
+    "to": {
+        "id": "to",
+        "handler": "/to"
+    },
+    "for": {
+        "id": "for",
+        "handler": "/for"
+    }
 }
 parameters = {
     "to_bot": {
@@ -143,20 +152,38 @@ def to_euro(budget):
     except Exception, e:
         return 0
 
+def add_url(obj, base_url = "", from_key = "handler", to_key = "url"):
+    obj[to_key] = base_url + obj[from_key]
+    return obj
+
 @app.route("/")
 def main():
-    return redirect(repo_url, code=302)
-
-@app.route("/to")
-def rto():
     received = int(time.time())
+    base_url = request.url_root[0:-1]
 
     return Response(
         response = json.dumps({
             "received": received,
             "emitted": int(time.time()),
             "status": "ok",
-            "methods": bots.values()
+            "response": "You Know, for Ask! See %s/releases/tag/v%s" % (repo_url,version),
+            "methods": map(lambda x: add_url(x, base_url), methods.values())
+        }, sort_keys=True, indent=4, separators=(',', ': ')),
+        status = 200,
+        mimetype = "application/json"
+    )
+
+@app.route("/to")
+def rto():
+    received = int(time.time())
+    base_url = request.url_root[0:-1]
+
+    return Response(
+        response = json.dumps({
+            "received": received,
+            "emitted": int(time.time()),
+            "status": "ok",
+            "methods": map(lambda x: add_url(x, base_url), bots.values())
         }, sort_keys=True, indent=4, separators=(',', ': ')),
         status = 200,
         mimetype = "application/json"
@@ -286,6 +313,7 @@ def to_bot(bot = ""):
 @app.route("/for")
 def rfor():
     received = int(time.time())
+    base_url = request.url_root[0:-1]
 
     return Response(
         response = json.dumps({
