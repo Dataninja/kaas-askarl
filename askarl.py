@@ -90,6 +90,12 @@ parameters = {
             "type": "integer",
             "description": "Add budget in €"
         },
+        "bonus": {
+            "id": "bo",
+            "name": "budget",
+            "type": "integer",
+            "description": "Add bonus points"
+        },
         "reply-to": {
             "id": "r",
             "name": "reply-to",
@@ -142,13 +148,13 @@ except Exception, e:
 
 app = Flask(__name__)
 
-def to_euro(budget):
+def to_num(s):
     try:
-        if 'k' in budget:
-            return int(budget.replace('k',''))*1000
-        if 'm' in budget:
-            return int(budget.replace('m',''))*1000*1000
-        return int(budget)
+        if 'k' in s:
+            return int(s.replace('k',''))*1000
+        if 'm' in s:
+            return int(s.replace('m',''))*1000*1000
+        return int(s)
     except Exception, e:
         return 0
 
@@ -197,7 +203,7 @@ def to_bot(bot = ""):
     question = args.get("q",args.get("question",""))
     token = args.get("t",args.get("token",""))
     mode = args.get("m",args.get("mode","fast"))
-    budget = to_euro(args.get("b",args.get("budget","0")))
+    budget = to_num(args.get("b",args.get("budget","0")))
 
     if bot not in bots:
         return Response(
@@ -244,7 +250,7 @@ def to_bot(bot = ""):
 
     user = users[token]
 
-    if not budget:
+    if not budget and not user['bonus']:
         return Response(
             response = json.dumps({
                 "received": received,
@@ -259,7 +265,7 @@ def to_bot(bot = ""):
             mimetype = "application/json"
         )
 
-    if budget > user['budget']:
+    if budget > user['budget'] and not user['bonus']:
         return Response(
             response = json.dumps({
                 "received": received,
@@ -273,8 +279,6 @@ def to_bot(bot = ""):
             status = 403,
             mimetype = "application/json"
         )
-    else:
-        user['budget'] -= budget
 
     reply_to = args.get("r",args.get("reply-to",user['reply-to']))
 
@@ -284,16 +288,23 @@ def to_bot(bot = ""):
             response = "Ao, se c'hai pure da puli' 'a machina chiamame de corsa! %s" % random.choice(responses[bot])
         elif budget > 9:
             response = "Nun so' 2k, ma bono così! %s" % random.choice(responses[bot])
-        else:
+        elif not user['bonus']:
             response = "Mortacci che purciaro! %s" % random.choice(responses[bot])
+        else:
+            response = "Tò, piglia e porta a casa! %s" % random.choice(responses[bot])
     else:
         if mode == "fast":
             response = "E mo quarcosa te trovo, intanto vatte a vede' 'a Banca Mondiale che c'ha tutto..."
         elif mode == "fa":
             response = "Se vabbè, nun t'allarga', quanno c'ho tempo..."
 
+    if user['bonus']:
+        user['bonus'] -= 1
+    else:
+        user['budget'] -= budget
+
     user['questions'].append({
-        "id": uuid.uuid4(),
+        "id": str(uuid.uuid4()),
         "received": received,
         "emitted": int(time.time()),
         "question": question,
@@ -357,9 +368,8 @@ def for_user():
 
     args = request.args
     token = args.get("t",args.get("token",""))
-    budget = to_euro(args.get("b",args.get("budget","0")))
-
-    print token, budget
+    budget = to_num(args.get("b",args.get("budget","0")))
+    bonus = to_num(args.get("bo",args.get("bonus","0")))
 
     if token not in users:
         return Response(
@@ -374,10 +384,17 @@ def for_user():
             mimetype = "application/json"
         )
 
+    user = users[token]
+
     if budget:
-        users[token]['budget'] += budget
-        users[token]['last_action'] = int(time.time())
-        users[token]['last_update'] = int(time.time())
+        user['budget'] += budget
+        user['last_update'] = int(time.time())
+
+    if bonus:
+        user['bonus'] += bonus
+        user['last_update'] = int(time.time())
+
+    user['last_action'] = int(time.time())
 
     with open(file_db,"w") as f:
         pickle.dump(users,f)
@@ -387,7 +404,7 @@ def for_user():
             "received": received,
             "emitted": int(time.time()),
             "status": "ok",
-            "response": users[token]
+            "response": user
         }, sort_keys=True, indent=4, separators=(',', ': ')),
         status = 200,
         mimetype = "application/json"
@@ -399,7 +416,7 @@ def for_token():
 
     args = request.args
     name = args.get("n",args.get("name",""))
-    budget = to_euro(args.get("b",args.get("budget","0")))
+    budget = to_num(args.get("b",args.get("budget","0")))
     reply_to = args.get("r",args.get("reply-to","now"))
 
     if not name:
@@ -425,7 +442,8 @@ def for_token():
         "created_at": int(time.time()),
         "last_update": int(time.time()),
         "last_action": int(time.time()),
-        "questions": []
+        "questions": [],
+        "bonus": 0
     }
 
     with open(file_db,"w") as f:
@@ -494,14 +512,32 @@ def for_remove():
     )
 
 if __name__ == "__main__":
+
     print "Up and running!"
-    print "Registered users:"
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        port = int(sys.argv[1])
+
+    ports = {
+        "dev": 51346,
+        "prod": 51345
+    }
+
+    if len(sys.argv) > 1:
+        if sys.argv[1].isdigit():
+            debug = False
+            port = int(sys.argv[1])
+        elif sys.argv[1] in ports:
+            debug = sys.argv[1] == "dev"
+            port = ports[sys.argv[1]]
+        else:
+            debug = False
+            port = ports["prod"]
     else:
-        port = 51345
-    app.run(port = port)
+        debug = False
+        port = ports["prod"]
+
+    app.run(port = port, debug = debug)
+
     with open(file_db,"w") as f:
         pickle.dump(users,f)
+
     print "Bye!"
 
