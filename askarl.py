@@ -6,7 +6,7 @@ from flask import Flask, Response, request, redirect
 
 version = "1.0.3"
 repo_url = "https://github.com/Dataninja/kaas-askarl"
-file_db = "./tokens.db"
+file_db = "./users.db"
 bots = {
     "karl": {
         "id": "karl",
@@ -136,9 +136,9 @@ parameters = {
 }
 try:
     with open(file_db) as f:
-        tokens = pickle.load(f)
+        users = pickle.load(f)
 except Exception, e:
-    tokens = {}
+    users = {}
 
 app = Flask(__name__)
 
@@ -242,6 +242,8 @@ def to_bot(bot = ""):
             mimetype = "application/json"
         )
 
+    user = users[token]
+
     if not budget:
         return Response(
             response = json.dumps({
@@ -257,7 +259,7 @@ def to_bot(bot = ""):
             mimetype = "application/json"
         )
 
-    if budget > tokens[token]['budget']:
+    if budget > user['budget']:
         return Response(
             response = json.dumps({
                 "received": received,
@@ -272,9 +274,9 @@ def to_bot(bot = ""):
             mimetype = "application/json"
         )
     else:
-        tokens[token]['budget'] -= budget
+        user['budget'] -= budget
 
-    reply_to = args.get("r",args.get("reply-to",tokens[token]['reply-to']))
+    reply_to = args.get("r",args.get("reply-to",user['reply-to']))
 
     if reply_to == "now":
         time.sleep(random.randint(1,min(len(question.split()),10)))
@@ -290,11 +292,18 @@ def to_bot(bot = ""):
         elif mode == "fa":
             response = "Se vabbè, nun t'allarga', quanno c'ho tempo..."
 
-    tokens[token]['questions'] += 1
-    tokens[token]['last_action'] = int(time.time())
+    user['questions'].append({
+        "id": uuid.uuid4(),
+        "received": received,
+        "emitted": int(time.time()),
+        "question": question,
+        "response": response,
+        "thanks-to": bot
+    })
+    user['last_action'] = int(time.time())
 
     with open(file_db,"w") as f:
-        pickle.dump(tokens,f)
+        pickle.dump(users,f)
 
     return Response(
         response = json.dumps({
@@ -352,7 +361,7 @@ def for_user():
 
     print token, budget
 
-    if token not in tokens:
+    if token not in users:
         return Response(
             response = json.dumps({
                 "received": received,
@@ -366,19 +375,19 @@ def for_user():
         )
 
     if budget:
-        tokens[token]['budget'] += budget
-        tokens[token]['last_action'] = int(time.time())
-        tokens[token]['last_update'] = int(time.time())
+        users[token]['budget'] += budget
+        users[token]['last_action'] = int(time.time())
+        users[token]['last_update'] = int(time.time())
 
     with open(file_db,"w") as f:
-        pickle.dump(tokens,f)
+        pickle.dump(users,f)
 
     return Response(
         response = json.dumps({
             "received": received,
             "emitted": int(time.time()),
             "status": "ok",
-            "response": tokens[token]
+            "response": users[token]
         }, sort_keys=True, indent=4, separators=(',', ': ')),
         status = 200,
         mimetype = "application/json"
@@ -407,7 +416,7 @@ def for_token():
         )
 
     token = str(uuid.uuid4())
-    tokens[token] = {
+    users[token] = {
         "id": token,
         "token": token,
         "name": name,
@@ -416,25 +425,25 @@ def for_token():
         "created_at": int(time.time()),
         "last_update": int(time.time()),
         "last_action": int(time.time()),
-        "questions": 0
+        "questions": []
     }
 
     with open(file_db,"w") as f:
-        pickle.dump(tokens,f)
+        pickle.dump(users,f)
 
     return Response(
         response = json.dumps({
             "received": received,
             "emitted": int(time.time()),
             "status": "ok",
-            "response": tokens[token]
+            "response": users[token]
         }, sort_keys=True, indent=4, separators=(',', ': ')),
         status = 200,
         mimetype = "application/json"
     )
 
-@app.route("/for/tokens")
-def for_tokens():
+@app.route("/for/users")
+def for_users():
     received = int(time.time())
 
     return Response(
@@ -442,7 +451,7 @@ def for_tokens():
             "received": received,
             "emitted": int(time.time()),
             "status": "ok",
-            "response": tokens
+            "response": users
         }, sort_keys=True, indent=4, separators=(',', ': ')),
         status = 200,
         mimetype = "application/json"
@@ -468,10 +477,10 @@ def for_remove():
             mimetype = "application/json"
         )
 
-    del tokens[token]
+    del users[token]
 
     with open(file_db,"w") as f:
-        pickle.dump(tokens,f)
+        pickle.dump(users,f)
 
     return Response(
         response = json.dumps({
@@ -493,6 +502,6 @@ if __name__ == "__main__":
         port = 51345
     app.run(port = port)
     with open(file_db,"w") as f:
-        pickle.dump(tokens,f)
+        pickle.dump(users,f)
     print "Bye!"
 
