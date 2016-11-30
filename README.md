@@ -83,7 +83,7 @@ Examples:
 * ...
 
 ## Installation
-Clone the repository, change the service port if needed and run the service: `python askarl.py`.
+Clone the repository and run the service: `python askarl.py [port]`. Default port is 51345.
 Open http://localhost:54234 (or using your customized port) and use the service.
 Registered accounts are stored in a *tokens.db* file in pickle format and listed at */for/tokens*.
 

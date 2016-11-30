@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json, time, uuid, random, pickle
+import json, time, uuid, random, pickle, sys
 from flask import Flask, Response, request, redirect
 
 base_url = "http://ask.dataninja.it"
@@ -459,8 +459,11 @@ def for_remove():
 if __name__ == "__main__":
     print "Up and running!"
     print "Registered users:"
-    print tokens
-    app.run(port = 51345)
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        port = int(sys.argv[1])
+    else:
+        port = 51345
+    app.run(port = port)
     with open(file_db,"w") as f:
         pickle.dump(tokens,f)
     print "Bye!"
