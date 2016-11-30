@@ -475,6 +475,21 @@ def for_users():
         mimetype = "application/json"
     )
 
+@app.route("/for/questions")
+def for_questions():
+    received = int(time.time())
+
+    return Response(
+        response = json.dumps({
+            "received": received,
+            "emitted": int(time.time()),
+            "status": "ok",
+            "response": [q for user in users.values() for q in user['questions']]
+        }, sort_keys=True, indent=4, separators=(',', ': ')),
+        status = 200,
+        mimetype = "application/json"
+    )
+
 @app.route("/for/remove")
 def for_remove():
     received = int(time.time())
