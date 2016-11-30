@@ -4,7 +4,7 @@
 import json, time, uuid, random, pickle, sys
 from flask import Flask, Response, request, redirect
 
-version = "1.0.3"
+version = "1.1.0"
 repo_url = "https://github.com/Dataninja/kaas-askarl"
 file_db = "./users.db"
 bots = {
